@@ -4,8 +4,9 @@ import google.generativeai as genai
 import os
 import io
 import re
+from openpyxl.styles import Font, PatternFill
 
-# Set page config to collapsed/minimal sidebar and terminal page title
+# Set page config
 st.set_page_config(
     page_title="ANALYST.EXE",
     page_icon="📟",
@@ -13,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS to force terminal green/black style and hide Streamlit elements completely
+# Custom CSS to force terminal style with small fonts and a distinct upload border
 st.markdown("""
 <style>
 /* Hide the Streamlit header, footer, decoration, and hamburger menu */
@@ -26,23 +27,31 @@ header {visibility: hidden;}
 [data-testid="stToolbar"] {display: none !important;}
 [data-testid="stDecoration"] {display: none !important;}
 
-/* Force Background to Black and Text to Terminal Green Monospace */
+/* Force Background to Black and Text to Terminal Green Monospace with compact/small font sizes */
 html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .stApp {
     background-color: #000000 !important;
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
+    font-size: 14px !important;
 }
 
-/* Override all headers, paragraphs, lists, spans, and divs to be green monospace */
+/* Ensure all text matches terminal green and compact size */
 h1, h2, h3, h4, h5, h6, p, li, span, label, div {
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
+    font-size: 14px !important;
 }
 
-/* Set block container padding and width */
+/* Headers style */
+h1, h2, h3 {
+    font-size: 16px !important;
+    font-weight: bold !important;
+}
+
+/* Set block container padding */
 .block-container {
-    padding-top: 2rem !important;
-    padding-bottom: 2rem !important;
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
     max-width: 800px !important;
 }
 
@@ -54,7 +63,7 @@ h1, h2, h3, h4, h5, h6, p, li, span, label, div {
     border-bottom: 2px solid #00ff00 !important;
     border-radius: 0px !important;
     font-family: 'Courier New', Courier, monospace !important;
-    font-size: 16px !important;
+    font-size: 14px !important;
     padding-left: 0px !important;
     caret-color: #00ff00 !important;
 }
@@ -63,11 +72,6 @@ h1, h2, h3, h4, h5, h6, p, li, span, label, div {
     outline: none !important;
     box-shadow: none !important;
     border-bottom: 2px solid #00ff00 !important;
-}
-
-[data-testid="stTextInput"] label {
-    color: #00ff00 !important;
-    font-family: 'Courier New', Courier, monospace !important;
 }
 
 /* Style File Uploader component */
@@ -92,19 +96,24 @@ h1, h2, h3, h4, h5, h6, p, li, span, label, div {
     content: "[ + ADD EXCEL ]" !important;
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
-    font-size: 16px !important;
+    font-size: 14px !important;
     display: block !important;
     padding: 20px 0 !important;
     cursor: pointer !important;
 }
 
+/* Distinct, visible dashed terminal border */
 [data-testid="stFileUploadDropzone"] {
-    background: transparent !important;
-    border: 1px dashed #00ff00 !important;
+    background-color: #000000 !important;
+    border: 2px dashed #00ff00 !important;
     border-radius: 0px !important;
-    padding: 10px !important;
+    padding: 15px !important;
     text-align: center !important;
     cursor: pointer !important;
+}
+
+[data-testid="stFileUploadDropzone"]:hover {
+    border-color: #ffffff !important;
 }
 
 /* Style the uploaded file details card */
@@ -117,11 +126,11 @@ h1, h2, h3, h4, h5, h6, p, li, span, label, div {
     color: #00ff00 !important;
     border-radius: 0px !important;
     font-family: 'Courier New', Courier, monospace !important;
-    padding: 12px 16px !important;
-    margin-top: 15px !important;
+    padding: 8px 12px !important;
+    margin-top: 10px !important;
 }
 
-/* Ensure inner elements and text wrap cleanly without height constraints */
+/* Ensure inner elements and text wrap cleanly */
 [data-testid="stUploadedFile"] > div {
     display: flex !important;
     flex-direction: column !important;
@@ -130,13 +139,13 @@ h1, h2, h3, h4, h5, h6, p, li, span, label, div {
     overflow: hidden !important;
 }
 
-/* Style filenames and other texts inside the file details card */
 [data-testid="stUploadedFile"] * {
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
+    font-size: 13px !important;
     white-space: normal !important;
     word-break: break-all !important;
-    line-height: 1.4 !important;
+    line-height: 1.3 !important;
 }
 
 [data-testid="stUploadedFile"] svg {
@@ -161,7 +170,8 @@ h1, h2, h3, h4, h5, h6, p, li, span, label, div {
     border: 1px solid #00ff00 !important;
     border-radius: 0px !important;
     font-family: 'Courier New', Courier, monospace !important;
-    padding: 8px 20px !important;
+    font-size: 13px !important;
+    padding: 6px 16px !important;
     cursor: pointer !important;
     text-transform: uppercase !important;
 }
@@ -184,27 +194,29 @@ code, pre {
     border: 1px solid #00ff00 !important;
     border-radius: 0px !important;
     font-family: 'Courier New', Courier, monospace !important;
+    font-size: 13px !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# Helper to print terminal style logs
+# Helper to print terminal style error logs
 def term_print(text, type="info"):
     if type == "error":
         color = "#ff3333"
         prefix = "[-]"
-    elif type == "success":
-        color = "#00ff00"
-        prefix = "[+]"
     else:
         color = "#00ff00"
         prefix = "[+]"
     st.markdown(f"<pre style='color:{color}; background:black; border:none; padding:0; margin:0;'>{prefix} {text}</pre>", unsafe_allow_html=True)
 
-# Helper to sanitize instructions into a clean filename
-def sanitize_filename(instruction):
-    # Convert operators to words
-    s = instruction.lower()
+# Helper to sanitize instructions into a clean filename matching User specification
+def sanitize_filename(instruction, columns):
+    # Lowercase columns for matching
+    col_lower = [c.lower() for c in columns]
+    col_map = {c.lower(): c for c in columns} # maps lowercase to original casing
+    
+    # Translate operators
+    s = instruction
     s = s.replace(">=", " gte ")
     s = s.replace("<=", " lte ")
     s = s.replace(">", " gt ")
@@ -213,24 +225,40 @@ def sanitize_filename(instruction):
     s = s.replace("=", " eq ")
     s = s.replace("!=", " neq ")
     
-    # Remove all other non-alphanumeric characters, replacing them with spaces
+    # Remove all other non-alphanumeric characters
     s = re.sub(r'[^a-zA-Z0-9]', ' ', s)
-    
-    # Split into words
     words = s.split()
     
     # Filter stopwords
     stopwords = {"filter", "select", "get", "show", "with", "a", "an", "the", "for", "to", "in", "on", "at", "by", "of", "and", "where", "find", "list"}
-    filtered_words = [w for w in words if w not in stopwords]
-    
-    # Fallback to original words if all were stopwords
-    if not filtered_words:
-        filtered_words = words
+    filtered = []
+    for w in words:
+        if w.lower() not in stopwords:
+            # Restore original column casing if matching
+            if w.lower() in col_map:
+                filtered.append(col_map[w.lower()])
+            else:
+                filtered.append(w)
+                
+    # Reordering logic: [operator] [value] [column] -> [column] [operator] [value]
+    # Example: ['students', 'gt', '9', 'CGPA'] -> ['students', 'CGPA', 'gt', '9']
+    i = 0
+    while i < len(filtered) - 2:
+        op = filtered[i].lower()
+        val = filtered[i+1]
+        col = filtered[i+2]
+        if op in {"gt", "lt", "gte", "lte", "eq", "neq"} and val.isdigit() and col.lower() in col_lower:
+            filtered[i], filtered[i+1], filtered[i+2] = col, op, val
+            i += 3
+        else:
+            i += 1
+            
+    # Capitalize the first word
+    if filtered:
+        filtered[0] = filtered[0].capitalize()
         
-    # Join with underscores
-    filename = "_".join(filtered_words)
+    filename = "_".join(filtered)
     
-    # If empty, default to "result"
     if not filename:
         filename = "result"
         
@@ -254,7 +282,7 @@ if not api_key:
     term_print("OPERATION TERMINATED. CONFIGURE ENVIRONMENT AND RESTART APPLICATION.", type="error")
     st.stop()
 
-# Initialize Session State variables for result caching to avoid UI loss on download click
+# Initialize Session State variables for results caching to prevent UI reset on download click
 if 'result_df' not in st.session_state:
     st.session_state.result_df = None
 if 'ai_code' not in st.session_state:
@@ -266,11 +294,11 @@ if 'error_msg' not in st.session_state:
 if 'last_file' not in st.session_state:
     st.session_state.last_file = None
 
-# File Uploader - Placement at the very top of application inputs
+# 1. Upload Section (xlsx only)
 uploaded_file = st.file_uploader("SOURCE_FILE", type=["xlsx"], label_visibility="collapsed")
 
 if uploaded_file is not None:
-    # Clear session state if a new file is uploaded
+    # Reset session state if a new file is uploaded
     if st.session_state.last_file != uploaded_file.name:
         st.session_state.last_file = uploaded_file.name
         st.session_state.result_df = None
@@ -279,22 +307,21 @@ if uploaded_file is not None:
         st.session_state.error_msg = None
 
     try:
-        # Load excel sheet into memory
         df = pd.read_excel(uploaded_file)
         columns = list(df.columns)
         
-        # User Instruction Input (Follows uploader)
-        instruction = st.text_input("INSTRUCTION_INPUT", label_visibility="collapsed", placeholder="ENTER COMMAND (e.g. Filter CGPA > 9)")
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Data Metadata Summary (Dimensions and columns list, placed before Execute button)
+        # 2. Metadata Block (placed before instruction input and execute button)
         st.markdown(f"<pre style='color:#00ff00; background:black; border:none; padding:0; margin:0;'>[DATA_LOADED: {df.shape[0]} rows * {df.shape[1]} columns]</pre>", unsafe_allow_html=True)
-        st.markdown(f"<pre style='color:#00ff00; background:black; border:none; padding:0; margin:0;'>Columns: {', '.join(columns)}</pre>", unsafe_allow_html=True)
+        st.markdown(f"**COLUMNS DETECTED:** {', '.join(columns)}")
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Execute button
+        # 3. Input Instruction Section
+        instruction = st.text_input("INSTRUCTION_INPUT", label_visibility="collapsed", placeholder="ENTER COMMAND (e.g. Filter students > 9 CGPA)")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # 4. Execute Action Button
         if st.button("[ EXECUTE ]"):
             if not instruction:
                 st.session_state.error_msg = "ERROR: Instruction command is empty."
@@ -302,7 +329,6 @@ if uploaded_file is not None:
                 st.session_state.ai_code = None
                 st.session_state.out_filename = None
             else:
-                # Clear previous outputs
                 st.session_state.error_msg = None
                 st.session_state.result_df = None
                 st.session_state.ai_code = None
@@ -335,7 +361,7 @@ if uploaded_file is not None:
                     response = model.generate_content(system_prompt)
                     ai_code = response.text.strip()
                     
-                    # Strip markdown if model ignored instructions
+                    # Strip markdown block wrappers if present
                     if ai_code.startswith("```python"):
                         ai_code = ai_code[len("```python"):].strip()
                     elif ai_code.startswith("```"):
@@ -343,38 +369,35 @@ if uploaded_file is not None:
                     if ai_code.endswith("```"):
                         ai_code = ai_code[:-3].strip()
                     
-                    # Setup isolated environment
+                    # Isolated execution
                     local_vars = {
                         'df': df.copy(),
                         'pd': pd
                     }
                     
-                    # Executing generated code
                     exec(ai_code, {}, local_vars)
                     
-                    # Extract and process result_df
                     if 'result_df' in local_vars:
                         result_df = local_vars['result_df']
                         
-                        # Convert to DataFrame if a Series is returned as safety fallback (ensures column header is preserved)
+                        # Fallback convert Series to DataFrame
                         if isinstance(result_df, pd.Series):
                             col_name = result_df.name if result_df.name else "result"
                             result_df = result_df.to_frame(name=col_name)
                         
                         if isinstance(result_df, pd.DataFrame):
-                            # Store outputs in session state
                             st.session_state.result_df = result_df
                             st.session_state.ai_code = ai_code
-                            st.session_state.out_filename = sanitize_filename(instruction)
+                            st.session_state.out_filename = sanitize_filename(instruction, columns)
                         else:
                             st.session_state.error_msg = f"RUNTIME ERROR: 'result_df' is of type {type(result_df)}, expected pandas.DataFrame"
                     else:
                         st.session_state.error_msg = "RUNTIME ERROR: Variable 'result_df' was not populated by the compiled code."
-                        st.session_state.ai_code = ai_code  # Save code for debugging
+                        st.session_state.ai_code = ai_code
                 except Exception as e:
                     st.session_state.error_msg = f"COMPILER/RUNTIME EXCEPTION: {str(e)}"
-                    
-        # Render execution outputs from session state (Clean layout with only requested elements)
+
+        # 5. Output Result Area (Clean terminal layout: no status/compilation log outputs)
         if st.session_state.error_msg:
             term_print(st.session_state.error_msg, type="error")
             if st.session_state.ai_code:
@@ -382,7 +405,6 @@ if uploaded_file is not None:
                 st.code(st.session_state.ai_code, language="python")
                 
         elif st.session_state.result_df is not None:
-            # Result Output Area (Only code, preview, and download)
             st.markdown("<pre style='color:#00ff00; background:black; border:none; padding:0; margin:0;'>[CODE_GENERATED]</pre>", unsafe_allow_html=True)
             st.code(st.session_state.ai_code, language="python")
             
@@ -390,16 +412,28 @@ if uploaded_file is not None:
             st.markdown("<pre style='color:#00ff00; background:black; border:none; padding:0; margin:0;'>[PREVIEW_RESULT]</pre>", unsafe_allow_html=True)
             st.code(st.session_state.result_df.head().to_string(index=False), language="text")
             
-            # Generate bytes buffer for download
+            # Format Excel Output with explicitly Bold Headers and accent Background Fill
             buffer = io.BytesIO()
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                # header=True is implicitly active, ensuring single column retains header and is not mistaken for raw data
                 st.session_state.result_df.to_excel(writer, index=False)
+                
+                workbook = writer.book
+                worksheet = writer.sheets[list(writer.sheets.keys())[0]]
+                
+                # Bold headers + Subtle light-gray background to distinguish it from values
+                header_font = Font(name='Courier New', size=11, bold=True, color='000000')
+                header_fill = PatternFill(start_color='E0E0E0', end_color='E0E0E0', fill_type='solid')
+                
+                for col_num in range(1, len(st.session_state.result_df.columns) + 1):
+                    cell = worksheet.cell(row=1, column=col_num)
+                    cell.font = header_font
+                    cell.fill = header_fill
+                    
             excel_data = buffer.getvalue()
             
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # Download button styled as terminal option with dynamic filename
+            # Dynamic download button
             st.download_button(
                 label=f"[ DOWNLOAD: {st.session_state.out_filename.upper()} ]",
                 data=excel_data,

@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS to force terminal green/black style and hide Streamlit elements
+# Custom CSS to force terminal green/black style and hide Streamlit elements completely
 st.markdown("""
 <style>
 /* Hide the Streamlit header, footer, decoration, and hamburger menu */
@@ -162,14 +162,6 @@ code, pre {
     border-radius: 0px !important;
     font-family: 'Courier New', Courier, monospace !important;
 }
-
-/* Terminal blink cursor simulation */
-.cursor {
-    animation: blinker 1s linear infinite;
-}
-@keyframes blinker {
-    50% { opacity: 0; }
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -201,7 +193,7 @@ api_key = os.environ.get("GEMINI_API_KEY")
 
 if not api_key:
     term_print("SYSTEM ERROR: ENVIRONMENT VARIABLE 'GEMINI_API_KEY' NOT DETECTED.", type="error")
-    term_print("OPERATION TERMINATED. CONFIGURE ENVIRONMENT AND RESTART APPLICANT.", type="error")
+    term_print("OPERATION TERMINATED. CONFIGURE ENVIRONMENT AND RESTART APPLICATION.", type="error")
     st.stop()
 else:
     term_print("GEMINI_API_KEY DETECTED SECURELY.")
@@ -235,24 +227,25 @@ if uploaded_file is not None:
             # Configure Generative AI
             genai.configure(api_key=api_key)
             
-            # Construct strict system prompt
+            # Construct strict system prompt with instructions to force DataFrame output and filter execution
             system_prompt = (
                 "You are an expert pandas compiler. Your only output is raw, execution-ready Python pandas code.\n"
                 f"The input DataFrame is named 'df' and contains the following columns: {columns}.\n"
                 f"The user wants to perform this action: '{instruction}'.\n"
-                "You MUST save the final resulting DataFrame to a variable named 'result_df'.\n"
                 "Rules:\n"
                 "1. Refer to the input DataFrame strictly as 'df'.\n"
-                "2. Do NOT write any markdown blocks (such as ```python ... ```), explanations, HTML, comments, or extra text.\n"
-                "3. Your output MUST be 100% executable Python code.\n"
-                "4. Make sure 'result_df' is populated with the final DataFrame."
+                "2. Make sure you apply the filters properly using Boolean indexing. For example, if user asks to 'Filter CGPA > 9', your code MUST perform the filter like df[df['CGPA'] > 9] or df.query('CGPA > 9'). Do NOT just return columns without applying filters.\n"
+                "3. You MUST save the final resulting output to a variable named 'result_df'.\n"
+                "4. CRITICAL: 'result_df' MUST be a pandas DataFrame, not a Series. If the resulting operation produces a Series (e.g. selecting a single column like df['Age']), convert it to a DataFrame using `df[['Age']]` or `.to_frame()` to preserve the column names and headers.\n"
+                "5. Do NOT write any markdown blocks (such as ```python ... ```), explanations, HTML, comments, or extra text.\n"
+                "6. Your output MUST be 100% executable Python code."
             )
             
             try:
                 # Call gemini-2.5-flash model
                 model = genai.GenerativeModel(
                     model_name="gemini-2.5-flash",
-                    system_instruction="You are a pandas code compiler. You output ONLY raw executable python code. No comments, no explanations, no markdown tags. Assign output to result_df."
+                    system_instruction="You are a pandas code compiler. You output ONLY raw executable python code. No comments, no explanations, no markdown tags. Assign output to result_df and ensure it is a DataFrame."
                 )
                 
                 response = model.generate_content(system_prompt)
@@ -281,6 +274,12 @@ if uploaded_file is not None:
                 # Extract and process result_df
                 if 'result_df' in local_vars:
                     result_df = local_vars['result_df']
+                    
+                    # Convert to DataFrame if a Series is returned as safety fallback
+                    if isinstance(result_df, pd.Series):
+                        col_name = result_df.name if result_df.name else "result"
+                        result_df = result_df.to_frame(name=col_name)
+                        term_print(f"SAFETY: Converted output Series to DataFrame to preserve column '{col_name}'", type="info")
                     
                     if isinstance(result_df, pd.DataFrame):
                         term_print(f"EXECUTION SUCCESSFUL. RESULT DATASET SHAPE: {result_df.shape[0]} rows x {result_df.shape[1]} columns", type="success")

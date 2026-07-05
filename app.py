@@ -86,6 +86,11 @@ h1, h2, h3 {
     border: none !important;
 }
 
+/* Hide Streamlit label tag explicitly to prevent double-box / helper overlay */
+[data-testid="stFileUploader"] label {
+    display: none !important;
+}
+
 /* Hide standard file uploader texts/button */
 [data-testid="stFileUploadDropzone"] > div {
     display: none !important;
@@ -209,60 +214,12 @@ def term_print(text, type="info"):
         prefix = "[+]"
     st.markdown(f"<pre style='color:{color}; background:black; border:none; padding:0; margin:0;'>{prefix} {text}</pre>", unsafe_allow_html=True)
 
-# Helper to sanitize instructions into a clean filename matching User specification
-def sanitize_filename(instruction, columns):
-    # Lowercase columns for matching
-    col_lower = [c.lower() for c in columns]
-    col_map = {c.lower(): c for c in columns} # maps lowercase to original casing
-    
-    # Translate operators
-    s = instruction
-    s = s.replace(">=", " gte ")
-    s = s.replace("<=", " lte ")
-    s = s.replace(">", " gt ")
-    s = s.replace("<", " lt ")
-    s = s.replace("==", " eq ")
-    s = s.replace("=", " eq ")
-    s = s.replace("!=", " neq ")
-    
-    # Remove all other non-alphanumeric characters
-    s = re.sub(r'[^a-zA-Z0-9]', ' ', s)
-    words = s.split()
-    
-    # Filter stopwords
-    stopwords = {"filter", "select", "get", "show", "with", "a", "an", "the", "for", "to", "in", "on", "at", "by", "of", "and", "where", "find", "list"}
-    filtered = []
-    for w in words:
-        if w.lower() not in stopwords:
-            # Restore original column casing if matching
-            if w.lower() in col_map:
-                filtered.append(col_map[w.lower()])
-            else:
-                filtered.append(w)
-                
-    # Reordering logic: [operator] [value] [column] -> [column] [operator] [value]
-    # Example: ['students', 'gt', '9', 'CGPA'] -> ['students', 'CGPA', 'gt', '9']
-    i = 0
-    while i < len(filtered) - 2:
-        op = filtered[i].lower()
-        val = filtered[i+1]
-        col = filtered[i+2]
-        if op in {"gt", "lt", "gte", "lte", "eq", "neq"} and val.isdigit() and col.lower() in col_lower:
-            filtered[i], filtered[i+1], filtered[i+2] = col, op, val
-            i += 3
-        else:
-            i += 1
-            
-    # Capitalize the first word
-    if filtered:
-        filtered[0] = filtered[0].capitalize()
-        
-    filename = "_".join(filtered)
-    
-    if not filename:
-        filename = "result"
-        
-    return f"{filename}.xlsx"
+# Helper to sanitize instructions into a clean, short, filename safe name
+def sanitize_filename(instruction):
+    s = re.sub(r'[^a-zA-Z0-9]', '_', instruction[:15]).strip('_')
+    if not s:
+        s = "result"
+    return f"{s}.xlsx"
 
 # Terminal Banner
 st.markdown("""
@@ -294,7 +251,7 @@ if 'error_msg' not in st.session_state:
 if 'last_file' not in st.session_state:
     st.session_state.last_file = None
 
-# 1. Upload Section (xlsx only)
+# 1. Upload Section (xlsx only, explicit label_visibility collapsed)
 uploaded_file = st.file_uploader("SOURCE_FILE", type=["xlsx"], label_visibility="collapsed")
 
 if uploaded_file is not None:
@@ -388,7 +345,7 @@ if uploaded_file is not None:
                         if isinstance(result_df, pd.DataFrame):
                             st.session_state.result_df = result_df
                             st.session_state.ai_code = ai_code
-                            st.session_state.out_filename = sanitize_filename(instruction, columns)
+                            st.session_state.out_filename = sanitize_filename(instruction)
                         else:
                             st.session_state.error_msg = f"RUNTIME ERROR: 'result_df' is of type {type(result_df)}, expected pandas.DataFrame"
                     else:
@@ -410,12 +367,16 @@ if uploaded_file is not None:
             
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("<pre style='color:#00ff00; background:black; border:none; padding:0; margin:0;'>[PREVIEW_RESULT]</pre>", unsafe_allow_html=True)
-            st.code(st.session_state.result_df.head().to_string(index=False), language="text")
+            
+            # Format and align columns in st.code preview
+            preview_str = st.session_state.result_df.head().to_string(index=False, justify='left', max_colwidth=20)
+            st.code(preview_str, language="text")
             
             # Format Excel Output with explicitly Bold Headers and accent Background Fill
             buffer = io.BytesIO()
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                st.session_state.result_df.to_excel(writer, index=False)
+                # Explicitly set header=True and index=False as requested
+                st.session_state.result_df.to_excel(writer, index=False, header=True)
                 
                 workbook = writer.book
                 worksheet = writer.sheets[list(writer.sheets.keys())[0]]

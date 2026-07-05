@@ -76,13 +76,14 @@ h1, h2, h3 {
 
 /* Style File Uploader component */
 [data-testid="stFileUploader"] {
-    background-color: #000000 !important;
+    background-color: transparent !important;
     border: none !important;
     padding: 0px !important;
+    box-shadow: none !important;
 }
 
 [data-testid="stFileUploader"] section {
-    background-color: #000000 !important;
+    background-color: transparent !important;
     border: none !important;
 }
 
@@ -90,9 +91,12 @@ h1, h2, h3 {
 [data-testid="stFileUploader"] label {
     display: none !important;
 }
+[data-testid="stFileUploader"] [data-testid="stWidgetLabel"] {
+    display: none !important;
+}
 
-/* Hide standard file uploader texts/button */
-[data-testid="stFileUploadDropzone"] > div {
+/* Hide ALL direct children of the dropzone EXCEPT the hidden input to avoid text/button overlay */
+[data-testid="stFileUploadDropzone"] > *:not(input) {
     display: none !important;
 }
 
@@ -368,14 +372,14 @@ if uploaded_file is not None:
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("<pre style='color:#00ff00; background:black; border:none; padding:0; margin:0;'>[PREVIEW_RESULT]</pre>", unsafe_allow_html=True)
             
-            # Format and align columns in st.code preview
+            # Format and align columns in st.code preview cleanly using justify='left' and max_colwidth=20
             preview_str = st.session_state.result_df.head().to_string(index=False, justify='left', max_colwidth=20)
             st.code(preview_str, language="text")
             
             # Format Excel Output with explicitly Bold Headers and accent Background Fill
             buffer = io.BytesIO()
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                # Explicitly set header=True and index=False as requested
+                # Explicitly set index=False and header=True
                 st.session_state.result_df.to_excel(writer, index=False, header=True)
                 
                 workbook = writer.book

@@ -72,9 +72,8 @@ h1, h2, h3, h4, h5, h6, p, li, span, label, div {
 /* Style File Uploader component */
 [data-testid="stFileUploader"] {
     background-color: #000000 !important;
-    border: 1px dashed #00ff00 !important;
-    border-radius: 0px !important;
-    padding: 10px !important;
+    border: none !important;
+    padding: 0px !important;
 }
 
 [data-testid="stFileUploader"] section {
@@ -109,26 +108,49 @@ h1, h2, h3, h4, h5, h6, p, li, span, label, div {
 
 /* Style the uploaded file details card */
 [data-testid="stUploadedFile"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     background-color: #000000 !important;
     border: 1px solid #00ff00 !important;
     color: #00ff00 !important;
     border-radius: 0px !important;
     font-family: 'Courier New', Courier, monospace !important;
+    padding: 12px 16px !important;
+    margin-top: 15px !important;
 }
 
+/* Ensure inner elements and text wrap cleanly without height constraints */
+[data-testid="stUploadedFile"] > div {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    height: auto !important;
+    overflow: hidden !important;
+}
+
+/* Style filenames and other texts inside the file details card */
 [data-testid="stUploadedFile"] * {
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
+    white-space: normal !important;
+    word-break: break-all !important;
+    line-height: 1.4 !important;
 }
 
 [data-testid="stUploadedFile"] svg {
     fill: #00ff00 !important;
     color: #00ff00 !important;
+    flex-shrink: 0 !important;
 }
 
 [data-testid="stUploadedFile"] button {
     background-color: transparent !important;
     border: none !important;
+    color: #00ff00 !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    font-family: 'Courier New', Courier, monospace !important;
 }
 
 /* Style Download Button to look like terminal option */

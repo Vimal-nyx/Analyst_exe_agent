@@ -83,8 +83,17 @@ h1, h2, h3 {
 }
 
 [data-testid="stFileUploader"] section {
-    background-color: transparent !important;
-    border: none !important;
+    background-color: #111111 !important;
+    border: 2px dashed #00ff00 !important;
+    border-radius: 0px !important;
+    padding: 15px !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    display: block !important;
+}
+
+[data-testid="stFileUploader"] section:hover {
+    border-color: #ffffff !important;
 }
 
 /* Hide Streamlit label tag explicitly to prevent double-box / helper overlay */
@@ -95,15 +104,14 @@ h1, h2, h3 {
     display: none !important;
 }
 
-/* Hide ALL direct children of the dropzone EXCEPT the hidden input to avoid text/button overlay */
-[data-testid="stFileUploaderDropzone"] > *:not(input) {
+/* Hide ALL direct children of the dropzone SECTION EXCEPT the hidden input to avoid text/button overlay */
+[data-testid="stFileUploader"] section > *:not(input) {
     display: none !important;
 }
 
 /* Inject minimal bracketed text and file size instruction instead */
-[data-testid="stFileUploaderDropzone"]::before {
-    content: "[ + ADD EXCEL ]\n\n(Limit 200MB per file)" !important;
-    white-space: pre-wrap !important;
+[data-testid="stFileUploader"] section::before {
+    content: "[ + ADD EXCEL ] - Max 200MB" !important;
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
     font-size: 16px !important;
@@ -111,20 +119,7 @@ h1, h2, h3 {
     padding: 10px 0 !important;
     cursor: pointer !important;
     line-height: 1.4 !important;
-}
-
-/* Distinct, visible dashed terminal border */
-[data-testid="stFileUploaderDropzone"] {
-    background-color: #000000 !important;
-    border: 2px dashed #00ff00 !important;
-    border-radius: 0px !important;
-    padding: 15px !important;
     text-align: center !important;
-    cursor: pointer !important;
-}
-
-[data-testid="stFileUploaderDropzone"]:hover {
-    border-color: #ffffff !important;
 }
 
 /* Style the uploaded file details card */

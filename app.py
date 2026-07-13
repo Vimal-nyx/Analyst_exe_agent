@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS to force terminal style with small fonts and a distinct upload border
+# Custom CSS to force terminal style with slightly increased font sizes and a distinct upload border
 st.markdown("""
 <style>
 /* Hide the Streamlit header, footer, decoration, and hamburger menu */
@@ -27,24 +27,24 @@ header {visibility: hidden;}
 [data-testid="stToolbar"] {display: none !important;}
 [data-testid="stDecoration"] {display: none !important;}
 
-/* Force Background to Black and Text to Terminal Green Monospace with compact/small font sizes */
+/* Force Background to Black and Text to Terminal Green Monospace with compact/readable font sizes */
 html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .stApp {
     background-color: #000000 !important;
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
-    font-size: 14px !important;
+    font-size: 16px !important;
 }
 
 /* Ensure all text matches terminal green and compact size */
 h1, h2, h3, h4, h5, h6, p, li, span, label, div {
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
-    font-size: 14px !important;
+    font-size: 16px !important;
 }
 
 /* Headers style */
 h1, h2, h3 {
-    font-size: 16px !important;
+    font-size: 18px !important;
     font-weight: bold !important;
 }
 
@@ -63,7 +63,7 @@ h1, h2, h3 {
     border-bottom: 2px solid #00ff00 !important;
     border-radius: 0px !important;
     font-family: 'Courier New', Courier, monospace !important;
-    font-size: 14px !important;
+    font-size: 16px !important;
     padding-left: 0px !important;
     caret-color: #00ff00 !important;
 }
@@ -105,7 +105,7 @@ h1, h2, h3 {
     content: "[ + ADD EXCEL ]" !important;
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
-    font-size: 14px !important;
+    font-size: 16px !important;
     display: block !important;
     padding: 20px 0 !important;
     cursor: pointer !important;
@@ -151,7 +151,7 @@ h1, h2, h3 {
 [data-testid="stUploadedFile"] * {
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
-    font-size: 13px !important;
+    font-size: 15px !important;
     white-space: normal !important;
     word-break: break-all !important;
     line-height: 1.3 !important;
@@ -168,8 +168,6 @@ h1, h2, h3 {
     border: none !important;
     color: #00ff00 !important;
     cursor: pointer !important;
-    flex-shrink: 0 !important;
-    font-family: 'Courier New', Courier, monospace !important;
 }
 
 /* Style Execute and Download Buttons to look like terminal options */
@@ -179,7 +177,7 @@ h1, h2, h3 {
     border: 1px solid #00ff00 !important;
     border-radius: 0px !important;
     font-family: 'Courier New', Courier, monospace !important;
-    font-size: 13px !important;
+    font-size: 15px !important;
     padding: 6px 16px !important;
     cursor: pointer !important;
     text-transform: uppercase !important;
@@ -203,7 +201,7 @@ code, pre {
     border: 1px solid #00ff00 !important;
     border-radius: 0px !important;
     font-family: 'Courier New', Courier, monospace !important;
-    font-size: 13px !important;
+    font-size: 15px !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -218,13 +216,6 @@ def term_print(text, type="info"):
         prefix = "[+]"
     st.markdown(f"<pre style='color:{color}; background:black; border:none; padding:0; margin:0;'>{prefix} {text}</pre>", unsafe_allow_html=True)
 
-# Helper to sanitize instructions into a clean, short, filename safe name
-def sanitize_filename(instruction):
-    s = re.sub(r'[^a-zA-Z0-9]', '_', instruction[:15]).strip('_')
-    if not s:
-        s = "result"
-    return f"{s}.xlsx"
-
 # Terminal Banner
 st.markdown("""
 <pre style="color:#00ff00; background:black; border:none; padding:0; line-height:1.2; font-weight:bold;">
@@ -235,12 +226,11 @@ st.markdown("""
 </pre>
 """, unsafe_allow_html=True)
 
-# Securely fetch API key
-api_key = os.environ.get("GEMINI_API_KEY")
+# 1. Sidebar API Key (BYOK)
+user_api_key = st.sidebar.text_input("Enter your Gemini API Key", type="password")
 
-if not api_key:
-    term_print("SYSTEM ERROR: ENVIRONMENT VARIABLE 'GEMINI_API_KEY' NOT DETECTED.", type="error")
-    term_print("OPERATION TERMINATED. CONFIGURE ENVIRONMENT AND RESTART APPLICATION.", type="error")
+if not user_api_key:
+    st.warning("SYSTEM WARNING: Gemini API Key is required. Please enter your Gemini API Key in the sidebar.")
     st.stop()
 
 # Initialize Session State variables for results caching to prevent UI reset on download click
@@ -255,8 +245,8 @@ if 'error_msg' not in st.session_state:
 if 'last_file' not in st.session_state:
     st.session_state.last_file = None
 
-# 1. Upload Section (xlsx only, explicit label_visibility collapsed)
-uploaded_file = st.file_uploader("SOURCE_FILE", type=["xlsx"], label_visibility="collapsed")
+# 2. File Upload Box
+uploaded_file = st.file_uploader("UPLOAD", type=["xlsx"], label_visibility="collapsed")
 
 if uploaded_file is not None:
     # Reset session state if a new file is uploaded
@@ -271,18 +261,15 @@ if uploaded_file is not None:
         df = pd.read_excel(uploaded_file)
         columns = list(df.columns)
         
-        # 2. Metadata Block (placed before instruction input and execute button)
-        st.markdown(f"<pre style='color:#00ff00; background:black; border:none; padding:0; margin:0;'>[DATA_LOADED: {df.shape[0]} rows * {df.shape[1]} columns]</pre>", unsafe_allow_html=True)
-        st.markdown(f"**COLUMNS DETECTED:** {', '.join(columns)}")
-        
+        # 3. Show Metadata
+        st.markdown(f"<pre style='color:#00ff00; background:black; border:none; padding:0; margin:0;'>[DATA_LOADED: {df.shape[0]} rows * {df.shape[1]} columns]\nCOLUMNS DETECTED: {', '.join(columns)}</pre>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # 3. Input Instruction Section
+        # 4. Text Input for Command
         instruction = st.text_input("INSTRUCTION_INPUT", label_visibility="collapsed", placeholder="ENTER COMMAND (e.g. Filter students > 9 CGPA)")
-        
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # 4. Execute Action Button
+        # 5. Execute Button
         if st.button("[ EXECUTE ]"):
             if not instruction:
                 st.session_state.error_msg = "ERROR: Instruction command is empty."
@@ -295,8 +282,8 @@ if uploaded_file is not None:
                 st.session_state.ai_code = None
                 st.session_state.out_filename = None
                 
-                # Configure Generative AI
-                genai.configure(api_key=api_key)
+                # Configure Generative AI with user's key
+                genai.configure(api_key=user_api_key)
                 
                 # Construct strict system prompt
                 system_prompt = (
@@ -341,15 +328,18 @@ if uploaded_file is not None:
                     if 'result_df' in local_vars:
                         result_df = local_vars['result_df']
                         
-                        # Fallback convert Series to DataFrame
+                        # Ensure the AI output (result_df) is always converted to a DataFrame (if it returns a Series, use .to_frame())
                         if isinstance(result_df, pd.Series):
-                            col_name = result_df.name if result_df.name else "result"
-                            result_df = result_df.to_frame(name=col_name)
+                            result_df = result_df.to_frame()
                         
                         if isinstance(result_df, pd.DataFrame):
                             st.session_state.result_df = result_df
                             st.session_state.ai_code = ai_code
-                            st.session_state.out_filename = sanitize_filename(instruction)
+                            # Create a short, safe filename from the user's prompt
+                            clean_name = re.sub(r'[^a-zA-Z0-9]', '_', instruction[:15]).strip('_') + '.xlsx'
+                            if not clean_name or clean_name == ".xlsx":
+                                clean_name = "result.xlsx"
+                            st.session_state.out_filename = clean_name
                         else:
                             st.session_state.error_msg = f"RUNTIME ERROR: 'result_df' is of type {type(result_df)}, expected pandas.DataFrame"
                     else:
@@ -358,7 +348,7 @@ if uploaded_file is not None:
                 except Exception as e:
                     st.session_state.error_msg = f"COMPILER/RUNTIME EXCEPTION: {str(e)}"
 
-        # 5. Output Result Area (Clean terminal layout: no status/compilation log outputs)
+        # 6. Preview Table & Download Button
         if st.session_state.error_msg:
             term_print(st.session_state.error_msg, type="error")
             if st.session_state.ai_code:
@@ -372,14 +362,13 @@ if uploaded_file is not None:
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("<pre style='color:#00ff00; background:black; border:none; padding:0; margin:0;'>[PREVIEW_RESULT]</pre>", unsafe_allow_html=True)
             
-            # Format and align columns in st.code preview cleanly using justify='left' and max_colwidth=20
-            preview_str = st.session_state.result_df.head().to_string(index=False, justify='left', max_colwidth=20)
-            st.code(preview_str, language="text")
+            # Align preview neatly using st.text and to_string
+            st.text(st.session_state.result_df.to_string(justify='left', max_colwidth=20))
             
-            # Format Excel Output with explicitly Bold Headers and accent Background Fill
+            # Format Excel Output with explicitly Bold Headers and drop index
             buffer = io.BytesIO()
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                # Explicitly set index=False and header=True
+                # Force bold headers and drop the index
                 st.session_state.result_df.to_excel(writer, index=False, header=True)
                 
                 workbook = writer.book

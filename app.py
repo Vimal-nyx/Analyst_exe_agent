@@ -85,23 +85,12 @@ h1, h2, h3 {
 }
 
 .stFileUploader section, [data-testid="stFileUploader"] section {
-    background-color: #111111 !important;
-    border: 2px dashed #00ff00 !important;
-    border-radius: 0px !important;
-    padding: 20px !important;
-    text-align: center !important;
-    cursor: pointer !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-height: 100px !important;
-    height: 100px !important;
-    box-sizing: border-box !important;
-}
-
-.stFileUploader section:hover, [data-testid="stFileUploader"] section:hover {
-    border-color: #ffffff !important;
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0px !important;
+    min-height: auto !important;
+    height: auto !important;
+    display: block !important;
 }
 
 /* Hide Streamlit label tag explicitly to prevent double-box / helper overlay */
@@ -112,21 +101,65 @@ h1, h2, h3 {
     display: none !important;
 }
 
-/* Hide ALL direct children of the dropzone SECTION EXCEPT the hidden input to avoid text/button overlay */
-.stFileUploader section > *:not(input), [data-testid="stFileUploader"] section > *:not(input) {
+/* Style the uploader button to look like a retro terminal button [ + ADD EXCEL ] */
+.stFileUploader button, [data-testid="stFileUploader"] button {
+    position: relative !important;
+    text-indent: -9999px !important;
+    line-height: 0 !important;
+    width: 160px !important;
+    height: 36px !important;
+    border: 1px solid #00ff00 !important;
+    background: transparent !important;
+    color: #00ff00 !important;
+    border-radius: 0px !important;
+    cursor: pointer !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+}
+
+.stFileUploader button::after, [data-testid="stFileUploader"] button::after {
+    content: "[ + ADD EXCEL ]" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    line-height: 34px !important;
+    text-indent: 0 !important;
+    text-align: center !important;
+    color: #00ff00 !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+}
+
+.stFileUploader button:hover, [data-testid="stFileUploader"] button:hover {
+    background-color: #00ff00 !important;
+}
+
+.stFileUploader button:hover::after, [data-testid="stFileUploader"] button:hover::after {
+    color: #000000 !important;
+}
+
+/* Hide all default text spans/smalls inside instructions wrapper */
+.stFileUploader [data-testid*="Instructions"] span,
+[data-testid="stFileUploader"] [data-testid*="Instructions"] span,
+.stFileUploader [data-testid*="Instructions"] small,
+[data-testid="stFileUploader"] [data-testid*="Instructions"] small {
     display: none !important;
 }
 
-/* Inject minimal bracketed text and file size instruction instead */
-.stFileUploader section::before, [data-testid="stFileUploader"] section::before {
-    content: "[ + ADD EXCEL ] - Max 200MB" !important;
+/* Inject the custom "Max 200MB" text next to the button */
+.stFileUploader [data-testid*="Instructions"]::after,
+[data-testid="stFileUploader"] [data-testid*="Instructions"]::after {
+    content: "Max 200MB" !important;
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
-    font-size: 16px !important;
-    display: block !important;
-    width: 100% !important;
-    text-align: center !important;
-    line-height: 1.4 !important;
+    font-size: 15px !important;
+    display: inline-block !important;
+    margin-left: 15px !important;
+    vertical-align: middle !important;
+    line-height: 36px !important;
 }
 
 /* Style the uploaded file details card */

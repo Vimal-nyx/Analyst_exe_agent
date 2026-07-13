@@ -106,7 +106,7 @@ h1, h2, h3 {
     position: relative !important;
     text-indent: -9999px !important;
     line-height: 0 !important;
-    width: 160px !important;
+    width: 180px !important;
     height: 36px !important;
     border: 1px solid #00ff00 !important;
     background: transparent !important;
@@ -118,7 +118,7 @@ h1, h2, h3 {
 }
 
 .stFileUploader button::after, [data-testid="stFileUploader"] button::after {
-    content: "[ + ADD EXCEL ]" !important;
+    content: "[ UPLOAD HERE ]" !important;
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
@@ -149,15 +149,15 @@ h1, h2, h3 {
     display: none !important;
 }
 
-/* Inject the custom "Max 200MB" text next to the button */
-.stFileUploader [data-testid*="Instructions"]::after,
-[data-testid="stFileUploader"] [data-testid*="Instructions"]::after {
+/* Inject the custom "Max 200MB" text to the LEFT of the button */
+.stFileUploader [data-testid*="Instructions"]::before,
+[data-testid="stFileUploader"] [data-testid*="Instructions"]::before {
     content: "Max 200MB" !important;
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
     font-size: 15px !important;
     display: inline-block !important;
-    margin-left: 15px !important;
+    margin-right: 15px !important;
     vertical-align: middle !important;
     line-height: 36px !important;
 }

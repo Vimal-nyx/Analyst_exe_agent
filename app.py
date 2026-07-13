@@ -75,51 +75,58 @@ h1, h2, h3 {
 }
 
 /* Style File Uploader component */
-[data-testid="stFileUploader"] {
+.stFileUploader, [data-testid="stFileUploader"] {
     background-color: transparent !important;
     border: none !important;
     padding: 0px !important;
     box-shadow: none !important;
+    display: block !important;
+    width: 100% !important;
 }
 
-[data-testid="stFileUploader"] section {
+.stFileUploader section, [data-testid="stFileUploader"] section {
     background-color: #111111 !important;
     border: 2px dashed #00ff00 !important;
     border-radius: 0px !important;
-    padding: 15px !important;
+    padding: 20px !important;
     text-align: center !important;
     cursor: pointer !important;
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100px !important;
+    height: 100px !important;
+    box-sizing: border-box !important;
 }
 
-[data-testid="stFileUploader"] section:hover {
+.stFileUploader section:hover, [data-testid="stFileUploader"] section:hover {
     border-color: #ffffff !important;
 }
 
 /* Hide Streamlit label tag explicitly to prevent double-box / helper overlay */
-[data-testid="stFileUploader"] label {
+.stFileUploader label, [data-testid="stFileUploader"] label {
     display: none !important;
 }
-[data-testid="stFileUploader"] [data-testid="stWidgetLabel"] {
+.stFileUploader [data-testid="stWidgetLabel"], [data-testid="stFileUploader"] [data-testid="stWidgetLabel"] {
     display: none !important;
 }
 
 /* Hide ALL direct children of the dropzone SECTION EXCEPT the hidden input to avoid text/button overlay */
-[data-testid="stFileUploader"] section > *:not(input) {
+.stFileUploader section > *:not(input), [data-testid="stFileUploader"] section > *:not(input) {
     display: none !important;
 }
 
 /* Inject minimal bracketed text and file size instruction instead */
-[data-testid="stFileUploader"] section::before {
+.stFileUploader section::before, [data-testid="stFileUploader"] section::before {
     content: "[ + ADD EXCEL ] - Max 200MB" !important;
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
     font-size: 16px !important;
     display: block !important;
-    padding: 10px 0 !important;
-    cursor: pointer !important;
-    line-height: 1.4 !important;
+    width: 100% !important;
     text-align: center !important;
+    line-height: 1.4 !important;
 }
 
 /* Style the uploaded file details card */

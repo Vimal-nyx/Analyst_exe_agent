@@ -96,12 +96,12 @@ h1, h2, h3 {
 }
 
 /* Hide ALL direct children of the dropzone EXCEPT the hidden input to avoid text/button overlay */
-[data-testid="stFileUploadDropzone"] > *:not(input) {
+[data-testid="stFileUploaderDropzone"] > *:not(input) {
     display: none !important;
 }
 
 /* Inject minimal bracketed text instead */
-[data-testid="stFileUploadDropzone"]::before {
+[data-testid="stFileUploaderDropzone"]::before {
     content: "[ + ADD EXCEL ]" !important;
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
@@ -112,7 +112,7 @@ h1, h2, h3 {
 }
 
 /* Distinct, visible dashed terminal border */
-[data-testid="stFileUploadDropzone"] {
+[data-testid="stFileUploaderDropzone"] {
     background-color: #000000 !important;
     border: 2px dashed #00ff00 !important;
     border-radius: 0px !important;
@@ -121,7 +121,7 @@ h1, h2, h3 {
     cursor: pointer !important;
 }
 
-[data-testid="stFileUploadDropzone"]:hover {
+[data-testid="stFileUploaderDropzone"]:hover {
     border-color: #ffffff !important;
 }
 
@@ -218,11 +218,8 @@ def term_print(text, type="info"):
 
 # Terminal Banner
 st.markdown("""
-<pre style="color:#00ff00; background:black; border:none; padding:0; line-height:1.2; font-weight:bold;">
-============================================================
-              A N A L Y S T . E X E  (v1.0)
-   STATELESS NATURAL LANGUAGE DATA MANIPULATION UNIT
-============================================================
+<pre style="color:#00ff00; background:black; border:none; padding:0; line-height:1.2; font-weight:bold; font-size: 24px; margin-bottom: 20px;">
+XLSFetch
 </pre>
 """, unsafe_allow_html=True)
 
@@ -247,7 +244,7 @@ if 'last_file' not in st.session_state:
     st.session_state.last_file = None
 
 # File Upload Box
-uploaded_file = st.file_uploader("UPLOAD", type=["xlsx"], label_visibility="collapsed")
+uploaded_file = st.file_uploader("", type=["xlsx"], label_visibility="collapsed")
 
 if uploaded_file is not None:
     # Reset session state if a new file is uploaded

@@ -226,11 +226,12 @@ st.markdown("""
 </pre>
 """, unsafe_allow_html=True)
 
-# 1. Sidebar API Key (BYOK)
-user_api_key = st.sidebar.text_input("Enter your Gemini API Key", type="password")
+# Securely fetch API key from environment
+api_key = os.environ.get("GEMINI_API_KEY")
 
-if not user_api_key:
-    st.warning("SYSTEM WARNING: Gemini API Key is required. Please enter your Gemini API Key in the sidebar.")
+if not api_key:
+    term_print("SYSTEM ERROR: ENVIRONMENT VARIABLE 'GEMINI_API_KEY' NOT DETECTED.", type="error")
+    term_print("OPERATION TERMINATED. CONFIGURE ENVIRONMENT AND RESTART APPLICATION.", type="error")
     st.stop()
 
 # Initialize Session State variables for results caching to prevent UI reset on download click
@@ -245,7 +246,7 @@ if 'error_msg' not in st.session_state:
 if 'last_file' not in st.session_state:
     st.session_state.last_file = None
 
-# 2. File Upload Box
+# File Upload Box
 uploaded_file = st.file_uploader("UPLOAD", type=["xlsx"], label_visibility="collapsed")
 
 if uploaded_file is not None:
@@ -261,15 +262,15 @@ if uploaded_file is not None:
         df = pd.read_excel(uploaded_file)
         columns = list(df.columns)
         
-        # 3. Show Metadata
+        # Show Metadata
         st.markdown(f"<pre style='color:#00ff00; background:black; border:none; padding:0; margin:0;'>[DATA_LOADED: {df.shape[0]} rows * {df.shape[1]} columns]\nCOLUMNS DETECTED: {', '.join(columns)}</pre>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # 4. Text Input for Command
+        # Text Input for Command
         instruction = st.text_input("INSTRUCTION_INPUT", label_visibility="collapsed", placeholder="ENTER COMMAND (e.g. Filter students > 9 CGPA)")
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # 5. Execute Button
+        # Execute Button
         if st.button("[ EXECUTE ]"):
             if not instruction:
                 st.session_state.error_msg = "ERROR: Instruction command is empty."
@@ -282,8 +283,8 @@ if uploaded_file is not None:
                 st.session_state.ai_code = None
                 st.session_state.out_filename = None
                 
-                # Configure Generative AI with user's key
-                genai.configure(api_key=user_api_key)
+                # Configure Generative AI with API key from environment
+                genai.configure(api_key=api_key)
                 
                 # Construct strict system prompt
                 system_prompt = (
@@ -348,7 +349,7 @@ if uploaded_file is not None:
                 except Exception as e:
                     st.session_state.error_msg = f"COMPILER/RUNTIME EXCEPTION: {str(e)}"
 
-        # 6. Preview Table & Download Button
+        # Preview Table & Download Button
         if st.session_state.error_msg:
             term_print(st.session_state.error_msg, type="error")
             if st.session_state.ai_code:

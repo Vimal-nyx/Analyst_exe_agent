@@ -100,15 +100,17 @@ h1, h2, h3 {
     display: none !important;
 }
 
-/* Inject minimal bracketed text instead */
+/* Inject minimal bracketed text and file size instruction instead */
 [data-testid="stFileUploaderDropzone"]::before {
-    content: "[ + ADD EXCEL ]" !important;
+    content: "[ + ADD EXCEL ]\n\n(Limit 200MB per file)" !important;
+    white-space: pre-wrap !important;
     color: #00ff00 !important;
     font-family: 'Courier New', Courier, monospace !important;
     font-size: 16px !important;
     display: block !important;
-    padding: 20px 0 !important;
+    padding: 10px 0 !important;
     cursor: pointer !important;
+    line-height: 1.4 !important;
 }
 
 /* Distinct, visible dashed terminal border */
